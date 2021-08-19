@@ -97,9 +97,44 @@ exports.getAllReservations = getAllReservations;
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 const getAllProperties = (options, limit = 10) => {
+
+  let queryString = `SELECT properties.*, avg(property_reviews.rating) as average_rating FROM properties JOIN property_reviews ON properties.id = property_reviews.property_id`;
+  let queryParams = [limit];
+  const keys = Object.keys(options)
+  if (keys.length) {
+    queryString +=  ` WHERE`
+
+    for (let key of keys){
+      console.log(key)
+      if (isNaN(options[key])){
+        queryParams.push((options[key]));
+      } else if (key === 'minimum_price_per_night' || key === 'maximum_price_per_night') {
+        queryParams.push(Number(options[key]) * 100);
+      } else {
+        queryParams.push(Number(options[key]));
+      }
+
+      if (key === 'minimum_price_per_night') {
+        queryString += ` cost_per_night >= $${queryParams.length}`
+      } else if (key === 'maximum_price_per_night') {
+        queryString += ` cost_per_night <= $${queryParams.length}`
+      } else if (key === 'minimum_rating'){
+        queryString += ` rating >= $${queryParams.length}`
+      } else {
+        queryString += ` ${key} = $${queryParams.length}`
+      }
+
+      if (queryParams.length <= keys.length) {
+        queryString += ` AND`;
+      }
+
+    }
+  }
+
+  queryString += ` GROUP BY properties.id LIMIT $1`
   return pool
-      .query(`SELECT * FROM properties LIMIT $1`, [limit])
-      .then((result) => result.rows[0])
+      .query(queryString, queryParams)
+      .then((result) => result.rows)
       .catch((error) => console.error(error.message));
 };
 
