@@ -1,3 +1,7 @@
+# PSQL test
+1_queries/5_test.sql
+
+
 # Logs
 logs
 *.log
