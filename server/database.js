@@ -18,15 +18,14 @@ const pool = new Pool({
  */
 const getUserWithEmail = function(email) {
   let user;
-  for (const userId in users) {
-    user = users[userId];
-    if (user.email.toLowerCase() === email.toLowerCase()) {
-      break;
-    } else {
-      user = null;
-    }
-  }
-  return Promise.resolve(user);
+
+  const query = 'SELECT * FROM users WHERE email = $1'
+  return pool
+  .query('SELECT * FROM users WHERE email = $1', [email.toLocaleLowerCase()])
+  .then(result => result.rows[0])
+  .catch(error => console.error(error.message));
+
+  // return Promise.resolve(user);
 }
 exports.getUserWithEmail = getUserWithEmail;
 
